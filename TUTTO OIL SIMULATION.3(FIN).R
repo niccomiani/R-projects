@@ -3,13 +3,13 @@ library(quantmod)
 library(TTR)
 
 #scarichiamo dati storici petrolio WTI
-getSymbols("WTISPLC", src = "FRED", from= "01-01-2000", auto.assign = FALSE )  # Prezzi spot WTI da FRED, from= "2000-01-01", auto.assign = FALSE)
+oil <- getSymbols("CL=F", src = "yahoo", from= "2000-01-01", auto.assign = FALSE)  # Prezzi WTI futures continui da Yahoo
 # stiamo dicendo cosa, da dove, da quando scaricare il petrolio 
 #FALSE fondamentale altrimenti caricherebbe una nuova variabile 
-##ho dovuto cambiare yahoo causa non funzionamento con fred. 
+##ho dovuto cambiare fred causa grafico orrendo. Yahoo funziona meglio 
 
 #estraiamo i prezzi di chiusura  della serie storica del petrolio 
-close_prices <- na.omit(Cl(oil)) 
+close_prices <- na.omit(Cl(oil)) ##usiamo Cl perché Yahoo fornisce serie OHLC
 
 #calcolo medie mobili 
 sma50 <- SMA(close_prices, 50) ##media mobile 50 giorni
@@ -21,9 +21,9 @@ colnames(oil_clean) <- c("Close", "SMA50", "SMA200")
 ##  na.omit per togliere le serie vuote, col names per ordinare per leggibilità 
 
 # preparo incontro fra sma50 e sma200 (goldern cross e death cross)
-golden_cross <- which(diff(oil_clean$SMA50 > oil_clean$SMA200) == 1) + 1 ##golden cross (segnale bullish) quando SMA50 > SMA200
+golden_cross <- which(Lag(oil_clean$SMA50, k = 1) < Lag(oil_clean$SMA200, k = 1) & oil_clean$SMA50 > oil_clean$SMA200) ##golden cross (segnale bullish) quando SMA50 > SMA200
 #golden cross bullish
-death_cross <- which(diff(oil_clean$SMA200 < oil_clean$SMA50) == 1) + 1 ##death cross (segnale bearish) quando SMA200 > SMA50
+death_cross <- which(Lag(oil_clean$SMA50, k = 1) > Lag(oil_clean$SMA200, k = 1) & oil_clean$SMA50 < oil_clean$SMA200) ##death cross (segnale bearish) quando SMA200 > SMA50
 #death cross bearish 
 ## +1 perchè diff accorcia la serie di 1 
 
